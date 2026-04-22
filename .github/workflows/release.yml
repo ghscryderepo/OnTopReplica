@@ -38,11 +38,14 @@ jobs:
     - name: Create Package
       shell: powershell
       run: |
-        Compress-Archive -Path src/OnTopReplica/bin/Release/* -DestinationPath OnTopReplica_Custom.zip
+        $tagName = "${{ github.ref_name }}"
+        $zipName = "OnTopReplica-Custom-$tagName.zip"
+        Compress-Archive -Path src/OnTopReplica/bin/Release/* -DestinationPath $zipName        
+        echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: OnTopReplica_Custom.zip
+        files: ${{ env.ZIP_NAME }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
