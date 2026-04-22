@@ -5,3 +5,6 @@ OPTIONS
   Restart notice
   
 + Shortcuts
+  Show/Hide
+  Clone current window
+  Cycle saved region

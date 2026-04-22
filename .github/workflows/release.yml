@@ -1,0 +1,48 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write      
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+      
+    - name: Restore NuGet
+      run: nuget restore src/OnTopReplica.sln
+      
+    - name: Build
+      run: msbuild src/OnTopReplica.sln /p:Configuration=Release
+
+    - name: Create Self-Signed Certificate and Sign
+      shell: powershell
+      run: |
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=VolodNINE" -HashAlgorithm sha256
+        
+        $exePath = "src/OnTopReplica/bin/Release/OnTopReplica.exe"
+        Set-AuthenticodeSignature -FilePath $exePath -Certificate $cert
+        
+        Write-Host "Binary signed successfully with self-signed certificate."
+      
+    - name: Create Package
+      shell: powershell
+      run: |
+        Compress-Archive -Path src/OnTopReplica/bin/Release/* -DestinationPath OnTopReplica_Custom.zip
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: OnTopReplica_Custom.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
